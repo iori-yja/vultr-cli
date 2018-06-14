@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate clap;
 #[macro_use]
 extern crate serde_derive;
@@ -9,11 +8,11 @@ mod vc2;
 
 use clap::App;
 use clap::SubCommand;
-use std::io::{self, Write};
+use std::io::{self, Write, Read};
 use std::fs::File;
 
 #[derive(Deserialize, Serialize)]
-struct Config {
+pub struct Config {
     access_token: String,
     default_region: String,
     default_output: String,
@@ -44,6 +43,20 @@ fn read_dialog(msg: &str, def: &str) -> String {
     } else {
         input.truncate(len.unwrap() - 1);
         input
+    }
+}
+
+pub fn read_config() -> Config {
+    let mut input = String::new();
+    let _ = File::open("~/.vultr").and_then(|mut f| f.read_to_string(&mut input)).unwrap();
+
+    match toml::from_str(&input) {
+        Ok(conf) => conf,
+        Err(_)   => {
+            println!("Configuration file is broken.\n{}", input);
+            configure();
+            read_config()
+        }
     }
 }
 
