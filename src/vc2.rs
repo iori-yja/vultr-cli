@@ -4,8 +4,7 @@ use clap::SubCommand;
 use futures::{future};
 use tokio;
 use hyper::{Client, Body, Request};
-use hyper::rt::Future;
-use hyper::rt::Stream;
+use hyper::rt::{self, Future, Stream};
 use hyper_tls::HttpsConnector;
 
 pub fn cli<'a>() -> App<'a,'a> {
@@ -23,21 +22,29 @@ fn call_api(token: &str, endpoint: &str) -> Result<String, String> {
     let mut https = HttpsConnector::new(4).unwrap();
     https.force_https(true);
     let client = Client::builder().build::<_, Body>(https);
-    let mut request = Request::builder();
-    let request = request.uri(endpoint).header("API-Key", token).body(Body::empty()).unwrap();
+    let request = Request::builder().uri(endpoint).header("API-Key", token).body(Body::empty()).unwrap();
 
     let mut response = String::new();
-    client.request(request)
-        .and_then(|res| {
-            res.body().map(|ch| ch.into_bytes()).fold(&mut response, |acc, x| future::ok(format!("{}{:?}", acc, x))
-        });
+    rt::run(rt::lazy(move || {
+        client.request(request)
+            .map(|res| {
+                println!("status: {}", res.status());
+                if let Ok(v) = res.into_body().map(|ch| ch.into_bytes()).collect().wait() {
+                    response = v.iter().fold("".to_string(), |acc, x| format!("{}{:?}", acc, x));
+                };
+            })
+            .map_err(|err| {
+                println!("{}", err)
+            })
+    }));
 
-    let mut body_str = String::new();
-    panic!();
+    println!("{}", &response);
+    Ok(response)
 }
 
 fn run(args: Option<&ArgMatches>) {
-    let conf = super::read_config();
+    //let conf = super::read_config();
+    call_api("", "https://google.com");
 }
 
 fn start(args: Option<&ArgMatches>) {
