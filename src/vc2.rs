@@ -1,9 +1,11 @@
 use clap::ArgMatches;
 use clap::App;
 use clap::SubCommand;
-use futures::{future, Future};
+use futures::{future};
 use tokio;
 use hyper::{Client, Body, Request};
+use hyper::rt::Future;
+use hyper::rt::Stream;
 use hyper_tls::HttpsConnector;
 
 pub fn cli<'a>() -> App<'a,'a> {
@@ -24,9 +26,14 @@ fn call_api(token: &str, endpoint: &str) -> Result<String, String> {
     let mut request = Request::builder();
     let request = request.uri(endpoint).header("API-Key", token).body(Body::empty()).unwrap();
 
-    client.request(request);
-    panic!();
+    let mut response = String::new();
+    client.request(request)
+        .and_then(|res| {
+            res.body().map(|ch| ch.into_bytes()).fold(&mut response, |acc, x| future::ok(format!("{}{:?}", acc, x))
+        });
 
+    let mut body_str = String::new();
+    panic!();
 }
 
 fn run(args: Option<&ArgMatches>) {
