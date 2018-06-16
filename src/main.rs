@@ -3,6 +3,10 @@ extern crate clap;
 extern crate serde_derive;
 extern crate serde;
 extern crate toml;
+extern crate hyper;
+extern crate hyper_tls;
+extern crate futures;
+extern crate tokio;
 
 mod vc2;
 
