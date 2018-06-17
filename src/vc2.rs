@@ -3,6 +3,7 @@ use clap::App;
 use clap::SubCommand;
 use futures::{future};
 use tokio;
+use tokio_core::reactor::Core;
 use hyper::{Client, Body, Request};
 use hyper::rt::{self, Future, Stream};
 use hyper_tls::HttpsConnector;
@@ -24,22 +25,21 @@ fn call_api(token: &str, endpoint: &str) -> Result<String, String> {
     let client = Client::builder().build::<_, Body>(https);
     let request = Request::builder().uri(endpoint).header("API-Key", token).body(Body::empty()).unwrap();
 
-    let mut response = String::new();
-    rt::run(rt::lazy(move || {
+    core::run(
         client.request(request)
-            .map(|res| {
+            .map(move |res| {
                 println!("status: {}", res.status());
                 if let Ok(v) = res.into_body().map(|ch| ch.into_bytes()).collect().wait() {
-                    response = v.iter().fold("".to_string(), |acc, x| format!("{}{:?}", acc, x));
+                    let mut response = v.iter().fold("".to_string(), |acc, x| format!("{}{:?}", acc, x));
+                    println!("{}", &response);
                 };
             })
             .map_err(|err| {
                 println!("{}", err)
             })
-    }));
+    );
 
-    println!("{}", &response);
-    Ok(response)
+    Ok("".to_string())
 }
 
 fn run(args: Option<&ArgMatches>) {

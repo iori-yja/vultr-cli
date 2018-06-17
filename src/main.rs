@@ -7,6 +7,7 @@ extern crate hyper;
 extern crate hyper_tls;
 extern crate futures;
 extern crate tokio;
+extern crate tokio_core;
 
 mod vc2;
 
