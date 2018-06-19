@@ -19,15 +19,15 @@ pub fn cli<'a>() -> App<'a,'a> {
 }
 
 fn call_api(token: &str, endpoint: &str) -> Result<String, String> {
-    let mut https = HttpsConnector::new(4).unwrap();
-    https.force_https(true);
-    //let request = Request::builder().uri(endpoint).header("API-Key", token).body(Body::empty()).unwrap();
-    let mut request:Request<Body> = Request::new(Method::Get, "http://google.com".parse().unwrap());
-    let mut headers = request.headers_mut().append_raw("API-Key", token);
-
     let mut core = tokio_core::reactor::Core::new().unwrap();
     let handle = core.handle();
-    let client = Client::new(&handle);
+
+    let mut https = HttpsConnector::new(4, &handle).unwrap();
+    let client = Client::configure().connector(https).build(&handle);
+
+    let mut request:Request<Body> = Request::new(Method::Get, "https://google.com".parse().unwrap());
+    let mut headers = request.headers_mut().append_raw("API-Key", token);
+
     let job = client.request(request);
     let response_body = core.run(job).unwrap().body();
 
