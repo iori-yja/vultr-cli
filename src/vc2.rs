@@ -18,7 +18,7 @@ pub fn cli<'a>() -> App<'a,'a> {
         .subcommand(SubCommand::with_name("reboot-instances"))
 }
 
-fn call_api(token: &str, endpoint: &str) -> Result<String, String> {
+fn call_api(conf: &super::Config, endpoint: &str) -> Result<String, String> {
     let mut core = tokio_core::reactor::Core::new().unwrap();
     let handle = core.handle();
 
@@ -26,7 +26,7 @@ fn call_api(token: &str, endpoint: &str) -> Result<String, String> {
     let client = Client::configure().connector(https).build(&handle);
 
     let mut request:Request<Body> = Request::new(Method::Get, "https://google.com".parse().unwrap());
-    let mut headers = request.headers_mut().append_raw("API-Key", token);
+    let mut headers = request.headers_mut().append_raw("API-Key", conf.access_token.to_owned());
 
     let job = client.request(request);
     let response_body = core.run(job).unwrap().body();
@@ -39,8 +39,8 @@ fn call_api(token: &str, endpoint: &str) -> Result<String, String> {
 }
 
 fn run(args: Option<&ArgMatches>) {
-    //let conf = super::read_config();
-    call_api("", "https://google.com");
+    let conf = super::read_config();
+    call_api(&conf, "https://google.com");
 }
 
 fn start(args: Option<&ArgMatches>) {

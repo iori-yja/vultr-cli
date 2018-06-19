@@ -16,11 +16,14 @@ use clap::SubCommand;
 use std::io::{self, Write, Read};
 use std::fs::File;
 
+static DEF_SERVER: &str = "https://api.vultr.com";
+
 #[derive(Deserialize, Serialize)]
 pub struct Config {
     access_token: String,
     default_region: String,
     default_output: String,
+    api_server: String,
 }
 
 impl Config {
@@ -29,6 +32,7 @@ impl Config {
             access_token: token,
             default_region: region,
             default_output: output,
+            api_server: DEF_SERVER.to_string(),
         }
     }
 }
