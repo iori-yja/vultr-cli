@@ -1,13 +1,13 @@
-use clap::ArgMatches;
 use clap::App;
+use clap::ArgMatches;
 use clap::SubCommand;
-use tokio;
-use tokio_core;
-use hyper::{Method, Client, Body, Request};
+use hyper::{Body, Client, Method, Request};
 use hyper_tls::HttpsConnector;
+use tokio;
 use tokio::prelude::Stream;
+use tokio_core;
 
-pub fn cli<'a>() -> App<'a,'a> {
+pub fn cli<'a>() -> App<'a, 'a> {
     SubCommand::with_name("vc2")
         .about("Vultr Could Compute")
         .subcommand(SubCommand::with_name("describe-regions"))
@@ -26,15 +26,19 @@ fn call_api(conf: &super::Config, endpoint: &str, method: Method) -> Result<Stri
     let https = HttpsConnector::new(4, &handle).unwrap();
     let client = Client::configure().connector(https).build(&handle);
     let target = (conf.api_server.to_owned() + endpoint).parse().unwrap();
-    let mut request:Request<Body> = Request::new(method, target);
-    let mut headers = request.headers_mut().append_raw("API-Key", conf.access_token.to_owned());
+    let mut request: Request<Body> = Request::new(method, target);
+    let mut headers = request
+        .headers_mut()
+        .append_raw("API-Key", conf.access_token.to_owned());
 
     let job = client.request(request);
     let response_body = core.run(job).unwrap().body();
 
-    response_body.map(|ch| {
-        print!("{}", String::from_utf8(ch.to_vec()).unwrap());
-    }).poll();
+    response_body
+        .map(|ch| {
+            print!("{}", String::from_utf8(ch.to_vec()).unwrap());
+        })
+        .poll();
 
     Ok("".to_string())
 }
@@ -79,6 +83,6 @@ pub fn handle(args: Option<&ArgMatches>) {
         ("reboot-instances", arg) => reboot(arg),
         ("describe-instances", arg) => describe(arg),
         ("describe-regions", arg) => regions(arg),
-        (_,_) => panic!(),
+        (_, _) => panic!(),
     }
 }
