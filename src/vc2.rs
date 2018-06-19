@@ -3,9 +3,8 @@ use clap::App;
 use clap::SubCommand;
 use futures::{future};
 use tokio;
-use tokio_core::reactor::Core;
-use hyper::{Client, Body, Request};
-use hyper::rt::{self, Future, Stream};
+use tokio_core;
+use hyper::{Method, Client, Body, Request};
 use hyper_tls::HttpsConnector;
 
 pub fn cli<'a>() -> App<'a,'a> {
@@ -22,10 +21,18 @@ pub fn cli<'a>() -> App<'a,'a> {
 fn call_api(token: &str, endpoint: &str) -> Result<String, String> {
     let mut https = HttpsConnector::new(4).unwrap();
     https.force_https(true);
-    let client = Client::builder().build::<_, Body>(https);
-    let request = Request::builder().uri(endpoint).header("API-Key", token).body(Body::empty()).unwrap();
+    //let request = Request::builder().uri(endpoint).header("API-Key", token).body(Body::empty()).unwrap();
+    let mut request:Request<Body> = Request::new(Method::Get, "http://google.com".parse().unwrap());
+    let mut headers = request.headers_mut().append_raw("API-Key", token);
 
-    core::run(
+    let mut core = tokio_core::reactor::Core::new().unwrap();
+    let handle = core.handle();
+    let client = Client::new(&handle);
+    let job = client.request(request);
+    core.run(job).unwrap();
+
+    /*
+    rt::run(
         client.request(request)
             .map(move |res| {
                 println!("status: {}", res.status());
@@ -38,6 +45,7 @@ fn call_api(token: &str, endpoint: &str) -> Result<String, String> {
                 println!("{}", err)
             })
     );
+    */
 
     Ok("".to_string())
 }
