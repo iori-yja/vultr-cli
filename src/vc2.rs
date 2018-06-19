@@ -22,7 +22,7 @@ fn call_api(conf: &super::Config, endpoint: &str) -> Result<String, String> {
     let mut core = tokio_core::reactor::Core::new().unwrap();
     let handle = core.handle();
 
-    let mut https = HttpsConnector::new(4, &handle).unwrap();
+    let https = HttpsConnector::new(4, &handle).unwrap();
     let client = Client::configure().connector(https).build(&handle);
 
     let mut request:Request<Body> = Request::new(Method::Get, "https://google.com".parse().unwrap());

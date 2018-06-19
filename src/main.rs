@@ -57,12 +57,19 @@ fn read_dialog(msg: &str, def: &str) -> String {
 
 pub fn read_config() -> Config {
     let mut input = String::new();
-    let _ = File::open("~/.vultr").and_then(|mut f| f.read_to_string(&mut input)).unwrap();
-
-    match toml::from_str(&input) {
-        Ok(conf) => conf,
-        Err(_)   => {
-            println!("Configuration file is broken.\n{}", input);
+    match File::open(".vultr").and_then(|mut f| f.read_to_string(&mut input)) {
+        Ok(_) => {
+            match toml::from_str(&input) {
+                Ok(conf) => conf,
+                Err(_)   => {
+                    println!("Configuration file is broken.\n{}", input);
+                    configure();
+                    read_config()
+                }
+            }
+        },
+        Err(e) => {
+            eprintln!("{}", e);
             configure();
             read_config()
         }
@@ -76,7 +83,7 @@ fn configure() {
 
     let conf_toml = toml::to_string(&Config::new(token, region, output)).unwrap();
 
-    let mut conf_file = File::create("~/.vultr").unwrap(); 
+    let mut conf_file = File::create(".vultr").unwrap(); 
     conf_file.write_all(conf_toml.as_bytes());
 }
 
