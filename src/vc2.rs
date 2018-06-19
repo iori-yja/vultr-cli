@@ -1,11 +1,11 @@
 use clap::ArgMatches;
 use clap::App;
 use clap::SubCommand;
-use futures::{future};
 use tokio;
 use tokio_core;
 use hyper::{Method, Client, Body, Request};
 use hyper_tls::HttpsConnector;
+use tokio::prelude::Stream;
 
 pub fn cli<'a>() -> App<'a,'a> {
     SubCommand::with_name("vc2")
@@ -29,23 +29,11 @@ fn call_api(token: &str, endpoint: &str) -> Result<String, String> {
     let handle = core.handle();
     let client = Client::new(&handle);
     let job = client.request(request);
-    core.run(job).unwrap();
+    let response_body = core.run(job).unwrap().body();
 
-    /*
-    rt::run(
-        client.request(request)
-            .map(move |res| {
-                println!("status: {}", res.status());
-                if let Ok(v) = res.into_body().map(|ch| ch.into_bytes()).collect().wait() {
-                    let mut response = v.iter().fold("".to_string(), |acc, x| format!("{}{:?}", acc, x));
-                    println!("{}", &response);
-                };
-            })
-            .map_err(|err| {
-                println!("{}", err)
-            })
-    );
-    */
+    response_body.map(|ch| {
+        print!("{}", String::from_utf8(ch.to_vec()).unwrap());
+    }).poll();
 
     Ok("".to_string())
 }
